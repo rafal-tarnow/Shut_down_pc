@@ -9,10 +9,8 @@
 #include <QPixmap>
 #include <QPainter>
 
-static int run_hour = 0;
-static int run_minute = 0;
 
-QSettings settings("Reyfel", "Alarm");
+QSettings settings("Reyfel", "ShutDownPC");
 
 
 
@@ -51,6 +49,13 @@ void Widget::createMinimalizeToTry(void)
 
 }
 
+void Widget::updateTimeTextOnWidted(QTime &time){
+    QString text = time.toString("hh:mm");
+    if ((time.second() % 2) == 0)
+        text[2] = ' ';
+    ui->label->setText(text);
+}
+
 void Widget::closeEvent(QCloseEvent *event)
 {
     hide();
@@ -62,13 +67,14 @@ Widget::Widget(QWidget *parent) :
     ui(new Ui::Widget)
 {
     ui->setupUi(this);
-    // setWindowFlags(Qt::WindowStaysOnTopHint);
-    // setWindowFlags(Qt::FramelessWindowHint);
+
+    setWindowFlags(Qt::WindowStaysOnTopHint);
+    //setWindowFlags(Qt::FramelessWindowHint);
 
     createMinimalizeToTry();
 
-    run_hour = settings.value("hour").toInt();
-    run_minute = settings.value("minute").toInt();
+    readTimesFromSettings();
+
 
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(showTime()));
@@ -76,15 +82,21 @@ Widget::Widget(QWidget *parent) :
 
     // QTimer::singleShot(0, this, SLOT(hide()));
 
-    applicationPath = "/home/rafal/Pulpit/android-studio/bin/./studio.sh";
-    ui->lineEdit->setText(applicationPath);
-    ui->timeEdit->setTime(QTime(run_hour,run_minute));
+    ui->timeEdit->setTime(shutDownTime);
+
+    QTime currentTime = QTime::currentTime();
+
+    updateTimeTextOnWidted(currentTime);
+    if(currentTime >= shutDownTime){
+        flagAppStartedAfterOffTime = true;
+    }
+     qDebug() << "flagAppStartedAfterOffTime = " << flagAppStartedAfterOffTime;
 }
 
 Widget::~Widget()
 {
-    settings.setValue("hour", run_hour);
-    settings.setValue("minute",run_minute);
+    saveTimeValues();
+
     timer->stop();
     delete timer;
 
@@ -106,66 +118,32 @@ void runProcess(QString processName){
     QProcess::startDetached(processName);
 }
 
-bool killall(const QString &process){
-    QProcess tasklist;
-    QStringList args;
-    args << process;
-    tasklist.start("killall", args);
-    tasklist.waitForFinished();
-}
-
-bool kill(const int pid){
-    QProcess tasklist;
-    QStringList args;
-    args << QString::number(pid);
-    tasklist.start("kill -s SIGTERM", args);
-    tasklist.waitForFinished();
-}
-
-/* return pid list */
-QList<QByteArray> isRunning(const QString &process) {
-    QProcess tasklist;
-    QStringList args;
-    args << process;
-    tasklist.start("pgrep", args);
-    tasklist.waitForFinished();
-    QList<QByteArray> output = tasklist.readAllStandardOutput().split('\n');
-    output.removeLast();
-    return output;
-}
-
 
 void Widget::showTime()
 //! [1] //! [2]
 {
-
-
-
-
     QTime time = QTime::currentTime();
-    QString text = time.toString("hh:mm");
-    if ((time.second() % 2) == 0)
-        text[2] = ' ';
-    ui->label->setText(text);
 
-    if((time.hour() >= run_hour) && (time.minute() >= run_minute) ){
+    updateTimeTextOnWidted(time);
 
+    if(!flagAppStartedAfterOffTime)
+    {
+        return;
+    }else{
 
-        if(isActive == false){
+        if((time.hour() >= showWindowTime.hour()) && ((time.minute()) >= showWindowTime.minute())){
             show();
             raise();
             activateWindow();
-
-            QList<QByteArray> listaPidow= isRunning("qtcreator");
-            for(int i = 0; i < listaPidow.size(); i++){
-                qDebug() << listaPidow.at(i).toInt();
-                kill(listaPidow.at(i).toInt());
+        }
+        if((time.hour() >= shutDownTime.hour()) && (time.minute() >= shutDownTime.minute()) ){
+            if(shutDownCommandWasActivated == false){
+                qDebug() << "Start Command";
+                runProcess("shutdown -P now");
+                shutDownCommandWasActivated = true;
             }
 
-            runProcess(applicationPath);
-            isActive = true;
         }
-
     }
 }
 
@@ -176,13 +154,32 @@ void Widget::on_close()
 
 void Widget::on_timeEdit_timeChanged(const QTime &time)
 {
-    run_hour = time.hour();
-    run_minute = time.minute();
 
-    settings.setValue("hour", run_hour);
-    settings.setValue("minute",run_minute);
+    qDebug() << "Off time = " << time.toString();
+    shutDownTime = time;
+    showWindowTime = shutDownTime.addSecs(-15*60);
+    qDebug() << "Show time = " << showWindowTime.toString();
+
+    saveTimeValues();
+
     qDebug() << "On time changed" ;
 }
+
+void Widget::saveTimeValues(){
+    settings.setValue("shut_down_hour", shutDownTime.hour());
+    settings.setValue("shut_down_minute",shutDownTime.minute());
+    settings.setValue("show_window_hour", showWindowTime.hour());
+    settings.setValue("show_window_minute", showWindowTime.minute());
+}
+
+
+
+void Widget::readTimesFromSettings(){
+    shutDownTime.setHMS(settings.value("shut_down_hour").toInt(), settings.value("shut_down_minute").toInt(), 0);
+    showWindowTime.setHMS(settings.value("show_window_hour").toInt(), settings.value("show_window_minute").toInt(), 0);
+}
+
+
 
 void Widget::on_timeEdit_editingFinished()
 {

@@ -7,6 +7,7 @@
 #include <QCloseEvent>
 #include <QMenu>
 #include <QAction>
+#include <QTime>
 
 namespace Ui {
 class Widget;
@@ -27,9 +28,12 @@ private slots:
      void on_timeEdit_editingFinished();
 
 private:
+     void saveTimeValues();
+     void readTimesFromSettings();
+     void updateTimeTextOnWidted(QTime &time);
     void closeEvent(QCloseEvent *event);
     void createMinimalizeToTry();
-    bool isActive = false;
+    bool shutDownCommandWasActivated = false;
     Ui::Widget *ui;
     QTimer *timer;
     QSystemTrayIcon *icon;
@@ -38,7 +42,11 @@ private:
     QAction *hide_window;
     QAction *restore;
     QAction *quitAction;
-    QString applicationPath;
+
+      QTime showWindowTime ;
+      QTime shutDownTime;
+
+    bool flagAppStartedAfterOffTime = false;
 };
 
 #endif // WIDGET_HPP
