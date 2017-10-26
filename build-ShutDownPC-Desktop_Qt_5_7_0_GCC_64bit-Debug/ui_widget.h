@@ -16,6 +16,7 @@
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QTimeEdit>
 #include <QtWidgets/QWidget>
 
@@ -25,19 +26,26 @@ class Ui_Widget
 {
 public:
     QGridLayout *gridLayout;
+    QPushButton *pushButton_save;
     QLabel *label_2;
     QTimeEdit *timeEdit;
     QLabel *label;
+    QLabel *label_info;
 
     void setupUi(QWidget *Widget)
     {
         if (Widget->objectName().isEmpty())
             Widget->setObjectName(QStringLiteral("Widget"));
-        Widget->resize(113, 97);
+        Widget->resize(203, 97);
         gridLayout = new QGridLayout(Widget);
         gridLayout->setSpacing(6);
         gridLayout->setContentsMargins(11, 11, 11, 11);
         gridLayout->setObjectName(QStringLiteral("gridLayout"));
+        pushButton_save = new QPushButton(Widget);
+        pushButton_save->setObjectName(QStringLiteral("pushButton_save"));
+
+        gridLayout->addWidget(pushButton_save, 1, 2, 1, 1);
+
         label_2 = new QLabel(Widget);
         label_2->setObjectName(QStringLiteral("label_2"));
         QSizePolicy sizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
@@ -128,6 +136,12 @@ public:
 
         gridLayout->addWidget(label, 0, 0, 1, 3);
 
+        label_info = new QLabel(Widget);
+        label_info->setObjectName(QStringLiteral("label_info"));
+        label_info->setStyleSheet(QStringLiteral("background-color: rgb(154, 154, 154);"));
+
+        gridLayout->addWidget(label_info, 2, 0, 1, 3);
+
 
         retranslateUi(Widget);
 
@@ -137,8 +151,10 @@ public:
     void retranslateUi(QWidget *Widget)
     {
         Widget->setWindowTitle(QApplication::translate("Widget", "Widget", 0));
+        pushButton_save->setText(QApplication::translate("Widget", "Save", 0));
         label_2->setText(QApplication::translate("Widget", "AT", 0));
         label->setText(QString());
+        label_info->setText(QApplication::translate("Widget", "Off time:", 0));
     } // retranslateUi
 
 };

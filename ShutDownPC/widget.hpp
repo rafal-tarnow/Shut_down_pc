@@ -22,15 +22,13 @@ public:
     ~Widget();
 private slots:
     void showTime();
-     void on_close();
-     void on_timeEdit_timeChanged(const QTime &time);
-
-     void on_timeEdit_editingFinished();
+    void on_close();
+    void on_pushButton_save_clicked();
 
 private:
-     void saveTimeValues();
-     void readTimesFromSettings();
-     void updateTimeTextOnWidted(QTime &time);
+    void saveTimeValues();
+    void readTimesFromSettings();
+    void updateTimeTextOnWidted(QTime &time);
     void closeEvent(QCloseEvent *event);
     void createMinimalizeToTry();
     bool shutDownCommandWasActivated = false;
@@ -43,8 +41,8 @@ private:
     QAction *restore;
     QAction *quitAction;
 
-      QTime showWindowTime ;
-      QTime shutDownTime;
+    QTime showWindowTime ;
+    QTime shutDownTime;
 
     bool flagAppStartedAfterOffTime = false;
 };

@@ -8,9 +8,12 @@
 #include <QDebug>
 #include <QPixmap>
 #include <QPainter>
+#include <iostream>
 
+using namespace std;
 
 QSettings settings("Reyfel", "ShutDownPC");
+
 
 
 
@@ -66,6 +69,7 @@ Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
 {
+    cout << "Start Widget::Widget()" << endl;
     ui->setupUi(this);
 
     setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -89,8 +93,21 @@ Widget::Widget(QWidget *parent) :
     updateTimeTextOnWidted(currentTime);
     if(currentTime >= shutDownTime){
         flagAppStartedAfterOffTime = true;
+
     }
-     qDebug() << "flagAppStartedAfterOffTime = " << flagAppStartedAfterOffTime;
+
+
+    if(flagAppStartedAfterOffTime){
+        cout << "   Widget::Widget()     flagAppStartedAfterOffTime = true;" << endl;
+    }else{
+        cout << "   Widget::Widget()     flagAppStartedAfterOffTime = false;" << endl;
+    }
+
+
+     ui->label_info->setText("Off time: " + shutDownTime.toString());
+
+    cout << "Stop Widget::Widget()" << endl;
+    cout.flush();
 }
 
 Widget::~Widget()
@@ -122,21 +139,29 @@ void runProcess(QString processName){
 void Widget::showTime()
 //! [1] //! [2]
 {
-    QTime time = QTime::currentTime();
 
-    updateTimeTextOnWidted(time);
+    cout << "start Widget::showTime()" << endl;
 
-    if(!flagAppStartedAfterOffTime)
+    QTime currentTime = QTime::currentTime();
+
+    updateTimeTextOnWidted(currentTime);
+
+    if(flagAppStartedAfterOffTime)
     {
+        cout << "   Widget::showTime() go in if(!flagAppStartedAfterOffTime)" << endl;
+        cout.flush();
         return;
     }else{
 
-        if((time.hour() >= showWindowTime.hour()) && ((time.minute()) >= showWindowTime.minute())){
-            show();
-            raise();
-            activateWindow();
+        if((currentTime.hour() >= showWindowTime.hour()) && ((currentTime.minute()) >= showWindowTime.minute())){
+
+            if(!isVisible() || isMinimized()){
+                show();
+                raise(); // raise on conditions to not stole focus
+            }
+
         }
-        if((time.hour() >= shutDownTime.hour()) && (time.minute() >= shutDownTime.minute()) ){
+        if((currentTime.hour() >= shutDownTime.hour()) && (currentTime.minute() >= shutDownTime.minute()) ){
             if(shutDownCommandWasActivated == false){
                 qDebug() << "Start Command";
                 runProcess("shutdown -P now");
@@ -145,27 +170,20 @@ void Widget::showTime()
 
         }
     }
+
+        cout << "stop Widget::showTime()" << endl;
+        cout.flush();
 }
+
 
 void Widget::on_close()
 {
     QApplication::quit();
 }
 
-void Widget::on_timeEdit_timeChanged(const QTime &time)
+
+void Widget::saveTimeValues()
 {
-
-    qDebug() << "Off time = " << time.toString();
-    shutDownTime = time;
-    showWindowTime = shutDownTime.addSecs(-15*60);
-    qDebug() << "Show time = " << showWindowTime.toString();
-
-    saveTimeValues();
-
-    qDebug() << "On time changed" ;
-}
-
-void Widget::saveTimeValues(){
     settings.setValue("shut_down_hour", shutDownTime.hour());
     settings.setValue("shut_down_minute",shutDownTime.minute());
     settings.setValue("show_window_hour", showWindowTime.hour());
@@ -173,15 +191,25 @@ void Widget::saveTimeValues(){
 }
 
 
-
-void Widget::readTimesFromSettings(){
+void Widget::readTimesFromSettings()
+{
     shutDownTime.setHMS(settings.value("shut_down_hour").toInt(), settings.value("shut_down_minute").toInt(), 0);
     showWindowTime.setHMS(settings.value("show_window_hour").toInt(), settings.value("show_window_minute").toInt(), 0);
 }
 
 
-
-void Widget::on_timeEdit_editingFinished()
+void Widget::on_pushButton_save_clicked()
 {
-    qDebug() << "On editing finished";
+    QTime time = ui->timeEdit->time();
+
+    qDebug() << "Off time = " << time.toString();
+    shutDownTime = time;
+    showWindowTime = shutDownTime.addSecs(-15*60);
+    qDebug() << "Show time = " << showWindowTime.toString();
+
+    ui->label_info->setText("Off time: " + shutDownTime.toString());
+
+    saveTimeValues();
+
+    qDebug() << "On time changed" ;
 }
