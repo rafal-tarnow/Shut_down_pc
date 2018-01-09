@@ -88,10 +88,12 @@ Widget::Widget(QWidget *parent) :
 
     ui->timeEdit->setTime(shutDownTime);
 
-    QTime currentTime = QTime::currentTime();
 
+    QTime currentTime = QTime::currentTime();
     updateTimeTextOnWidted(currentTime);
-    if(currentTime >= shutDownTime){
+
+    startupAppTime = QTime::currentTime();
+    if(startupAppTime >= shutDownTime){
         flagAppStartedAfterOffTime = true;
 
     }
@@ -104,7 +106,7 @@ Widget::Widget(QWidget *parent) :
     }
 
 
-     ui->label_info->setText("Off time: " + shutDownTime.toString());
+    ui->label_info->setText("Off time: " + shutDownTime.toString());
 
     cout << "Stop Widget::Widget()" << endl;
     cout.flush();
@@ -155,10 +157,10 @@ void Widget::showTime()
 
         if((currentTime.hour() >= showWindowTime.hour()) && ((currentTime.minute()) >= showWindowTime.minute())){
 
-            if(!isVisible() || isMinimized()){
-                show();
-                raise(); // raise on conditions to not stole focus
-            }
+            //            if(!isVisible() || isMinimized()){
+            //                show();
+            //                raise(); // raise on conditions to not stole focus
+            //            }
 
         }
         if((currentTime.hour() >= shutDownTime.hour()) && (currentTime.minute() >= shutDownTime.minute()) ){
@@ -171,8 +173,8 @@ void Widget::showTime()
         }
     }
 
-        cout << "stop Widget::showTime()" << endl;
-        cout.flush();
+    cout << "stop Widget::showTime()" << endl;
+    cout.flush();
 }
 
 
@@ -211,5 +213,6 @@ void Widget::on_pushButton_save_clicked()
 
     saveTimeValues();
 
+    flagAppStartedAfterOffTime = false;
     qDebug() << "On time changed" ;
 }

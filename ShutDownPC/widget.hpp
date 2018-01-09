@@ -41,6 +41,7 @@ private:
     QAction *restore;
     QAction *quitAction;
 
+    QTime startupAppTime;
     QTime showWindowTime ;
     QTime shutDownTime;
 
